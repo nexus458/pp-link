@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>TEAMINSTA — PP</title>
+<style>
+  :root { color-scheme: dark; }
+  html,body{height:100%;margin:0}
+  body{
+    background:#111317;color:#e7e9ee;
+    font:500 16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;
+  }
+  .card{max-width:420px}
+  h1{font-size:20px;margin:0 0 6px;letter-spacing:.3px}
+  p{margin:6px 0;color:#9aa1ad}
+  .spin{width:34px;height:34px;margin:18px auto;border:3px solid #2a2e37;border-top-color:#8ab4ff;border-radius:50%;animation:r 1s linear infinite}
+  @keyframes r{to{transform:rotate(360deg)}}
+  a.btn{display:none;margin-top:16px;padding:12px 18px;background:#2563eb;color:#fff;border-radius:10px;text-decoration:none;font-weight:600}
+  .err{display:none;color:#f0a1a1;margin-top:14px}
+  code{color:#c7cdd8}
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>📸 TEAMINSTA — PP</h1>
+    <p id="msg">Ouverture de l'outil…</p>
+    <div class="spin" id="spin"></div>
+    <a class="btn" id="go" href="#">Ouvrir l'outil →</a>
+    <p class="err" id="err">L'outil est momentanément hors ligne. Réessaie dans une minute, ou préviens le manager.</p>
+    <p style="margin-top:22px;font-size:13px">Garde ce lien en favori — il ne change <b>jamais</b>.</p>
+  </div>
+<script>
+// Front door permanente. La cible (le tunnel vivant du moment) est lue dans
+// url.txt du dépôt et mise à jour par le watchdog à chaque rotation.
+// On lit d'abord via l'API GitHub (reflète chaque mise à jour en quelques
+// secondes, CORS OK), puis en secours le fichier servi par Pages.
+var OWNER = "nexus458", REPO = "pp-link";
+var API = "https://api.github.com/repos/" + OWNER + "/" + REPO + "/contents/url.txt?ref=main&t=" + Date.now();
+var RAW = "url.txt?t=" + Date.now();
+
+function go(url){
+  url = (url || "").trim();
+  if (!/^https:\/\//.test(url)) { return fail(); }
+  var a = document.getElementById("go");
+  a.href = url; a.style.display = "inline-block";
+  document.getElementById("spin").style.display = "none";
+  document.getElementById("msg").textContent = "C'est prêt.";
+  location.replace(url);
+}
+function fail(){
+  document.getElementById("spin").style.display = "none";
+  document.getElementById("msg").textContent = "";
+  document.getElementById("err").style.display = "block";
+}
+fetch(API, {headers:{"Accept":"application/vnd.github.raw+json"}, cache:"no-store"})
+  .then(function(r){ if(!r.ok) throw 0; return r.text(); })
+  .then(function(t){ go(t); })
+  .catch(function(){
+    fetch(RAW, {cache:"no-store"})
+      .then(function(r){ if(!r.ok) throw 0; return r.text(); })
+      .then(function(t){ go(t); })
+      .catch(fail);
+  });
+</script>
+</body>
+</html>
